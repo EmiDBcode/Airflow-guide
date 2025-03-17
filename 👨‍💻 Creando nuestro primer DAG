@@ -1,0 +1,67 @@
+
+Los DAGs (Directed Acyclic Graphs) en Apache Airflow permiten definir flujos de trabajo automatizados con tareas que se ejecutan en un orden determinado. A continuación, crearemos nuestro primer DAG con una estructura básica y comentarios explicativos.
+
+### **1️⃣ Crear un archivo DAG en la carpeta `dags/`**
+
+Navega hasta la carpeta `dags/` y crea un archivo llamado `primer_dag.py`.
+
+```python
+# Importamos las librerías necesarias de Apache Airflow
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.python import PythonOperator
+
+# Explicación general del DAG
+descripcion_dag = "Este DAG sirve como ejemplo básico en Apache Airflow."
+
+# Definimos los argumentos por defecto para el DAG
+default_args = {
+    "owner": "airflow",  # Propietario del DAG
+    "depends_on_past": False,  # No depende de ejecuciones pasadas
+    "start_date": datetime(2024, 3, 16),  # Fecha de inicio
+    "retries": 1,  # Número de reintentos en caso de fallo
+    "retry_delay": timedelta(minutes=5)  # Tiempo de espera entre reintentos
+}
+
+# Definimos el DAG
+with DAG(
+    "primer_dag",  # Nombre del DAG
+    default_args=default_args,
+    description=descripcion_dag,
+    schedule_interval=timedelta(days=1),  # Se ejecuta diariamente
+    catchup=False  # No ejecuta tareas pasadas
+) as dag:
+    
+    # Tarea de inicio (DummyOperator no hace nada, solo marca el inicio del DAG)
+    inicio = DummyOperator(
+        task_id="inicio"
+    )
+    
+    # Definimos una función simple para ejecutar en una tarea PythonOperator
+    def tarea_ejemplo():
+        print("🚀 Ejecutando la tarea de ejemplo en el DAG")
+    
+    # Creamos una tarea PythonOperator para ejecutar la función
+    tarea_python = PythonOperator(
+        task_id="tarea_python",  # Nombre de la tarea
+        python_callable=tarea_ejemplo  # Función a ejecutar
+    )
+    
+    # Tarea final (marca el fin del DAG)
+    fin = DummyOperator(
+        task_id="fin"
+    )
+    
+    # Definimos la secuencia de ejecución de las tareas
+    inicio >> tarea_python >> fin
+```
+
+### **2️⃣ Subir el DAG a Airflow**
+Guarda el archivo y reinicia Airflow para que detecte el nuevo DAG.
+```bash
+docker-compose restart
+```
+Luego, ingresa a la UI de Airflow en [http://localhost:8080](http://localhost:8080), activa y ejecuta el DAG.
+
+---
